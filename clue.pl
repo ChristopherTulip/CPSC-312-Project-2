@@ -1,6 +1,10 @@
 :- dynamic suggestions/1.
 suggestions([]).
 
+suggestion(P) :- suggestions(L1), suggestion_helper(P, L1).
+suggestion_helper(P, [P|T]).
+suggestion_helper(P, [H|T]) :- suggestion_helper(P, T).
+
 :- dynamic weapons/1.
 weapons([knife, rope, pipe]). %, candlestick, gun, wrench]).
 
@@ -47,9 +51,10 @@ enter_cards(Y, Y)  :- remove(stop).
 enter_cards(X, Y)  :- Next is (X+1), process(remove), enter_cards(Next, Y).
 
 repl :- format("\n\nWelcome to Clue!\nPlease use the following commands:\n"),
-  format("guess.\t\t->\tGet me to tell you what to think!\n"),
-  format("remove.\t\t->\tEnter a logical deduction\n"),
-  format("view_database.\t->\tprint all valid items in the db\n"),
+  format("guess.\t\t\t->\tGet me to tell you what to think!\n"),
+  format("remove.\t\t\t->\tEnter a logical deduction\n"),
+  format("print_suggestions.\t->\tView previous suggestions\n"),
+  format("view_database.\t\t->\tprint all valid items in the db\n"),
   format("stop.\t\t\t->\tQuit\n"),
   read(X),
   process(X),
@@ -87,43 +92,47 @@ process(valid_weapons):-  format("The remaining valid weapons are: \n"),
                           weapons(L1),
                           print_weapons(L1).
 
+process( print_suggestions ) :- format("The suggestions you have made are: \n"),
+                                suggestions(L1),
+                                print_suggestions(L1).
+
 process(X) :- format("Process: Sorry I didn't understand your input\n").
 
-print_guess(Room, Weapon, Player) :- format("Weaponou should make this awesome guess:\n"),
+print_guess(Room, Weapon, Player) :- format("You should make this awesome guess:\n"),
                              format("Room: ~w", Room),
-                             format(" Weapon: ~w ", Y ),
+                             format(" Weapon: ~w ", Weapon ),
                              format("Player: ~w\n", Player).
 
-guess(room)   :- rooms(X),
-                 not(are_gone_weapons), gone_weapons(Y),
-                 not(are_gone_players), gone_players(BATMAN),
-                 print_guess(X, Y, BATMAN),
-                 retract( gone_players(L3) ),
-                 assert( gone_players( [X|L3] ) ).
+guess(room)   :- rooms([RH|RT]),
+                 not(are_gone_weapons), gone_weapons([WH|WT]),
+                 not(are_gone_players), gone_players([PH|PT]),
+                 suggestions(L1),
+                 retract( suggestions(L1) ),
+                 assert( suggestions( [ (RH, WH, PH) | L1 ] ) ),
+                 print_guess([RH|RT], [WH|WT], [PH|PT]).
 
-guess(player) :- players(X),
-                 not( are_gone_weapons), gone_weapons(Y),
-                 not( are_gone_rooms ), gone_rooms(BATMAN),
-                 format("You should make this awesome guess:\n"),
-                 format("Room: ~w", BATMAN),
-                 format(" Weapon: ~w ", Y ),
-                 format("Player: ~w\n", X).
+guess(player) :- players([PH|PT]),
+                 not( are_gone_weapons), gone_weapons([WH|WT]),
+                 not( are_gone_rooms ), gone_rooms([RH|RT]),
+                 suggestions(L1),
+                 retract( suggestions(L1) ),
+                 assert( suggestions([(RH, WH, PH)|L1]) ),
+                 print_guess([RH|RT], [WH|WT], [PH|PT]).
 
-guess(weapon) :- weapons(X),
-                 not( are_gone_rooms ), gone_rooms(Y),
-                 not( are_gone_players ), gone_players(BATMAN),
-                 format("You should make this awesome guess:\n"),
-                 format("Room: ~w", Y ),
-                 format(" Weapon: ~w ", X ),
-                 format("Player: ~w\n", BATMAN).
+guess(weapon) :- weapons([WH|WT]),
+                 not( are_gone_rooms ), gone_rooms([RH|RT]),
+                 not( are_gone_players ), gone_players([PH|PT]),
+                 suggestions(L1),
+                 retract( suggestions(L1) ),
+                 assert( suggestions([(RH, WH, PH)|L1]) ),
+                 print_guess([RH|RT], [WH|WT], [PH|PT]).
 
-guess(C)      :- weapons(X),
-                 rooms(Y),
-                 players(BATMAN),
-                 format("You should make this awesome guess:\n"),
-                 format("Room: ~w", Y ),
-                 format(" Weapon: ~w ", X ),
-                 format("Player: ~w\n", BATMAN).
+guess(C)      :- weapons([WH|WT]),
+                 rooms([RH|RT]),
+                 players([PH|PT]),
+                 retract( suggestions(L1) ),
+                 assert( suggestions([(RH, WH, PH)|L1]) ),
+                 print_guess([RH|RT], [WH|WT], [PH|PT]).
 
 check_if_done :- check_rooms,
                  check_players,
@@ -140,6 +149,10 @@ check_if_done.
 check_rooms         :- rooms(L1), L1 = [X].
 check_players       :- players(L1), L1 = [X].
 check_weapons       :- weapons(L1), L1 = [X].
+
+print_suggestions([]).
+print_suggestions([H|T]) :- suggestion(H), format("\t~w\n", H), print_suggestions(T).
+print_suggestions([H|T]) :- print_suggestions(T).
 
 print_players([]).
 print_players([H|T]) :- player(H), format("\t~w\n", [H|T]), print_players(T).
