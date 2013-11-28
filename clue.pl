@@ -1,24 +1,28 @@
+%% Christopher Tulip  - V4L7
+%% Julia Litke        - T1V7
+%% Entry point to program is clue.
+
 %% Basic database components: lists and grabbers for individual items
 :- dynamic weapons/1.
-weapons([knife, rope, pipe]). %, candlestick, gun, wrench]).
+weapons([knife, rope, pipe, candlestick, gun, wrench]).
 
 weapon(P) :- weapons(L1), list_helper(P, L1).
 
 :- dynamic players/1.
-players([mustard, plum, scarlett]). %, green, peacock, white]).
+players([mustard, plum, scarlett, green, peacock, white]).
 
 player(P) :- players(L1), list_helper(P, L1).
 
 :- dynamic rooms/1.
-rooms([kitchen, lounge]). %, lounge, hall, study, library, billiards_room, conservatory, ball_room ]).
+rooms([kitchen, lounge, hall, study, library, billiards_room, conservatory, ball_room ]).
 
 room(P) :- rooms(L1), list_helper(P, L1).
 
-list_helper(P, [P|T]).
-list_helper(P, [H|T]) :- list_helper(P, T).
+list_helper(P, [P|_]).
+list_helper(P, [_|T]) :- list_helper(P, T).
 
 %% Opponent tracker / opponent card tracker
-:- dynamic opponents/1. 
+:- dynamic opponents/1.
 opponents([]). %% [mustard, plum, scarlett, green, peacock, white]
 
 opponent(P) :- opponents(L1), list_helper(P, L1).
@@ -50,7 +54,6 @@ suggestion(P) :- suggestions(L1), list_helper(P, L1).
 clue    :- format("Enter the number of players OR ELSE!\n"),
            read(C),
            X is 18 / C,
-           Y is (C-1),
            format("Please enter opponents\n"),
            format("**NOTE** Use the following names: mustard, plum, scarlett, green, peacock, white\n"),
            format("******** Surround in square brackets, place commas in between\n"),
@@ -93,7 +96,7 @@ process(guess)        :-  format("Please enter the type you want to guess for ot
                           guess(X).
 
 process(init_remove)  :-  read(X),
-						  remove(X).                       
+						              remove(X).
 
 process(remove)       :-  format("Please enter the card you've been shown\n"),
                           read(X),
